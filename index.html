@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html data-theme="dark" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<meta content="dark light" name="color-scheme"/>
+<meta content="#06090f" name="theme-color"/>
+<title>Z Scanner Ultra · V2.0</title>
+<link href="css/app.css" rel="stylesheet"/>
+<link href="css/engine.css" rel="stylesheet"/>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN SCREEN ═══════════ -->
+<div class="login-screen" id="loginScreen">
+    <form class="login-card" id="loginForm">
+        <div class="brand-mark">⌬</div>
+        <p class="eyebrow">LOCAL INTELLIGENCE PLATFORM</p>
+        <h1>Z Scanner <span>Ultra</span></h1>
+        <p class="muted">Sign in to your local workspace</p>
+        <label for="username">Email</label>
+        <input autocomplete="username" id="username" name="username" required type="email" value="ziadmabrouki@scanner.gov"/>
+        <label for="password">Password</label>
+        <input autocomplete="current-password" id="password" name="password" required type="password" placeholder="Enter password"/>
+        <p class="error" hidden id="loginError" role="alert">Incorrect email or password.</p>
+        <button class="primary full" type="submit">Sign in <span>→</span></button>
+        <p class="security-note">Local demo sign-in only. This frontend-only login is not security protection.</p>
+        <p class="version">VERSION 2.0 · UNIFIED DATA ENGINE</p>
+    </form>
+</div>
+
+<!-- ═══════════ APP SHELL ═══════════ -->
+<div class="app-shell" hidden id="app">
+    <div class="app-container">
+
+        <!-- ── TOP NAVBAR ── -->
+        <header class="topbar">
+            <div class="brand-area">
+                <div class="brand-mark small">⌬</div>
+                <div class="brand-text">
+                    <strong class="brand-title">Z Scanner <span>Ultra</span></strong>
+                    <small class="brand-sub">V2.0</small>
+                </div>
+            </div>
+
+            <nav class="top-nav" id="navigation">
+                <button class="nav-item active" data-page="overview">Command Center</button>
+                <button class="nav-item" data-page="analytics">Threat Intel</button>
+                <button class="nav-item" data-page="domains">Assets</button>
+                <button class="nav-item" data-page="logs">Compliance</button>
+                <button class="nav-item" data-page="history">Reports</button>
+                <button class="nav-item" data-page="profile">Settings</button>
+            </nav>
+
+            <div class="top-actions">
+                <div class="search-bar">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="globalSearch" placeholder="Search IP, node, or alert..." autocomplete="off"/>
+                </div>
+                <button class="icon-btn" id="themeBtn" title="Toggle theme" aria-label="Toggle theme">☀️</button>
+                <div class="avatar" title="Ziad Mabrouki">ZM</div>
+                <button class="nav-item logout-hidden" id="logoutBtn" title="Log out">↪</button>
+            </div>
+        </header>
+
+        <!-- ── MAIN CONTENT ── -->
+        <main class="main-area">
+
+            <!-- ═════ OVERVIEW PAGE ═════ -->
+            <section class="page active" id="overviewPage">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">WORKSPACE / OVERVIEW</div>
+                        <h2>Command Center</h2>
+                    </div>
+                    <div class="header-badges">
+                        <span class="badge" id="threatBadge">⚠ Awaiting data</span>
+                        <span class="badge red" id="loadStatus">⏳ Loading…</span>
+                    </div>
+                </div>
+
+                <div class="dashboard engine-page" id="overviewRegion">
+
+                    <div class="data-controls">
+                        <span class="data-controls-label">📡 Data Sources</span>
+                        <button id="loadInputBtn" title="Load input/domains.txt to establish the exact root-domain total">📥 Load Input</button>
+                        <button id="loadLogBtn" title="Load scanner.log to read scanner position/progress">📜 Load Log</button>
+                        <button id="loadFileBtn" title="Load FINAL_RESULTS.jsonl">📂 Load Results</button>
+                        <button id="liveBtn" title="Watch the selected JSONL file for changes">● Live: Off</button>
+                        <button id="refreshBtn">⟳ Refresh</button>
+                        <button id="exportXlsxBtn">⬇ Export XLSX</button>
+                        <input accept=".jsonl,.json,.txt,application/json,text/plain" id="fileInput" type="file">
+                        <input accept=".txt,.list" id="inputFileInput" type="file">
+                        <input accept=".log,.txt" id="logFileInput" type="file"/>
+                        <span class="data-file-indicator" id="dataFileIndicator"></span>
+                    </div>
+
+                    <div class="offline-panel" id="offlinePanel" hidden>
+                        <h2>📂 Local JSONL Mode</h2>
+                        <p>Dashboard opened directly from your computer. Load the scanner files locally — no server or API required. For accurate scan progress, load <b>input/domains.txt</b> and <b>logs/scanner.log</b> in addition to <b>FINAL_RESULTS.jsonl</b>.</p>
+                        <label class="load-file-btn" for="fileInput">📁 Choose FINAL_RESULTS.jsonl</label>
+                    </div>
+
+                    <div class="kpi-grid" id="kpiGrid"></div>
+
+                    <div class="middle-panels">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h3>📊 Data Coverage</h3>
+                                <span class="status-badge" id="coverageBadge">Awaiting</span>
+                            </div>
+                            <div id="coverageBody" class="panel-body">
+                                <div class="empty-state small"><p>Load FINAL_RESULTS.jsonl to see coverage.</p></div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h3>⚡ Status Distribution</h3>
+                            </div>
+                            <div id="statusBody" class="panel-body">
+                                <div class="empty-state small"><p>Registration status breakdown appears here.</p></div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-header">
+                                <h3>⏰ Lifecycle Alerts</h3>
+                            </div>
+                            <div id="lifecycleBody" class="panel-body">
+                                <div class="empty-state small"><p>Expired and expiring domains will appear here.</p></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- ═════ ANALYTICS PAGE ═════ -->
+            <section class="page" id="analyticsPage">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">WORKSPACE / ANALYTICS</div>
+                        <h2>Threat Intelligence</h2>
+                    </div>
+                </div>
+                <div class="dashboard engine-page" id="analyticsRegion">
+                    <div class="lifecycle-monitor" id="lifecycleMonitor"></div>
+                    <div class="chart-section" id="chartContainer"></div>
+                </div>
+            </section>
+
+            <!-- ═════ DOMAINS PAGE ═════ -->
+            <section class="page" id="domainsPage">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">WORKSPACE / ASSETS</div>
+                        <h2>Domain Explorer</h2>
+                    </div>
+                </div>
+                <div class="dashboard engine-page" id="domainsRegion">
+                    <div class="toolbar">
+                        <input autocomplete="off" class="search-box" id="globalSearchInput" placeholder="🔍 Search root, sub, cname, ips, status, provider…"/>
+                        <div class="filter-group">
+                            <select id="fRegStatus">
+                                <option value="">Status: all</option>
+                                <option>REGISTERED</option><option>EXPIRED</option><option>PENDING_DELETE</option>
+                                <option>REDEMPTION_PERIOD</option><option>AVAILABLE</option><option>NOT_REGISTERED</option>
+                                <option>DROPPED</option><option>UNKNOWN</option><option>ERROR</option>
+                            </select>
+                            <select id="fConfidence">
+                                <option value="">Confidence: all</option><option>HIGH</option><option>MEDIUM</option><option>LOW</option>
+                            </select>
+                            <select id="fDnsStatus">
+                                <option value="">DNS: all</option><option>CNAME_FOUND</option><option>RESOLVED</option><option>FAILED</option>
+                            </select>
+                            <select id="fLifecycle">
+                                <option value="">Lifecycle: all</option>
+                                <option value="EXPIRED">EXPIRED</option>
+                                <option value="EXPIRING_7">EXPIRING ≤ 7D</option>
+                                <option value="EXPIRING_30">EXPIRING ≤ 30D</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="quick-filters" id="quickFilters">
+                        <button data-quick="all">All</button>
+                        <button data-quick="registered">REGISTERED</button>
+                        <button data-quick="pending_delete">PENDING DELETE</button>
+                        <button data-quick="redemption">REDEMPTION</button>
+                        <button data-quick="available">AVAILABLE</button>
+                        <button data-quick="unknown">UNKNOWN</button>
+                        <button data-quick="expiring">Expiring ≤ 7d</button>
+                        <button data-quick="expired">EXPIRED</button>
+                        <button data-quick="high">HIGH confidence</button>
+                        <button data-quick="clear">Clear filters</button>
+                    </div>
+                    <div class="table-wrap">
+                        <div class="table-scroll">
+                            <table id="dataTable"><thead id="tableHead"></thead><tbody id="tableBody"></tbody></table>
+                        </div>
+                        <div class="pagination-bar">
+                            <div>
+                                <span class="page-info" id="pageInfo">0-0 / 0</span>
+                                <select id="pageSizeSelect"><option value="100">100</option><option value="250">250</option><option value="500">500</option><option value="1000">1000</option></select>
+                            </div>
+                            <div>
+                                <button disabled id="prevPage">◀</button>
+                                <button disabled id="nextPage">▶</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═════ LOGS PAGE ═════ -->
+            <section class="page" id="logsPage">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">WORKSPACE / COMPLIANCE</div>
+                        <h2>Logs &amp; Integrity</h2>
+                    </div>
+                </div>
+                <div class="dashboard engine-page" id="logsRegion">
+                    <div class="live-panel">
+                        <span class="live-indicator" id="liveIndicator"><span class="live-dot"></span><span id="liveLabel">LIVE OFF</span></span>
+                        <span class="live-meta" id="liveMeta">No local file selected · Live watcher uses the browser file handle</span>
+                    </div>
+                    <div class="progress-panel">
+                        <div>
+                            <div class="progress-title"><span>SCANNER PROGRESS</span><span id="progressText">Input total not loaded</span></div>
+                            <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+                            <div style="display:flex;justify-content:space-between;gap:10px;margin-top:7px;flex-wrap:wrap">
+                                <span class="text-muted" id="progressDetail">Load domains.txt + scanner.log for exact position</span>
+                                <span class="text-muted" id="dataDetail">0 records · 0 invalid</span>
+                            </div>
+                        </div>
+                        <div class="progress-value" id="progressValue">—</div>
+                    </div>
+
+                    <section class="file-health-panel" aria-label="Scanner file health">
+                        <div class="file-health-head">
+                            <strong>📡 Source Health &amp; Live Controls</strong>
+                            <div class="live-settings">
+                                <label class="text-muted" for="snapshotModeSelect">Snapshots</label>
+                                <select id="snapshotModeSelect">
+                                    <option selected value="latest">Latest version</option>
+                                    <option value="all">Keep all</option>
+                                </select>
+                                <label class="text-muted" for="autoRefreshInterval">Auto refresh</label>
+                                <select id="autoRefreshInterval">
+                                    <option value="5">5 sec</option><option selected value="10">10 sec</option>
+                                    <option value="30">30 sec</option><option value="60">60 sec</option>
+                                </select>
+                                <button id="autoRefreshToggle" type="button">Auto: Off</button>
+                                <button id="monitorRefreshBtn" type="button">↻ Check files</button>
+                            </div>
+                        </div>
+                        <div class="file-health-grid" id="fileHealthGrid">
+                            <div class="file-health-card"><strong>FINAL_RESULTS.jsonl</strong><div class="meta">Not selected yet</div></div>
+                            <div class="file-health-card"><strong>scanner.log</strong><div class="meta">Not selected yet</div></div>
+                            <div class="file-health-card"><strong>domains.txt</strong><div class="meta">Not selected yet</div></div>
+                        </div>
+                        <div class="current-domain-card">
+                            <div>
+                                <div class="domain-name" id="currentDomainName">Waiting for scanner.log</div>
+                                <div class="domain-sub" id="currentDomainMeta">Progress is based on domains.txt and scanner.log, never result-row count.</div>
+                            </div>
+                            <span class="health-pill health-missing" id="currentDomainStatus">NO LOG</span>
+                        </div>
+                        <div class="progress-warning" hidden id="progressWarning"></div>
+                        <div class="text-muted" id="integrityMeta" style="margin-top:8px">Integrity: waiting for results file.</div>
+                    </section>
+
+                    <div aria-live="polite" class="engine-status-grid" id="engineStatusGrid">
+                        <div class="engine-status-card"><span class="engine-status-label">Completed</span><strong id="statusCompleted">0</strong></div>
+                        <div class="engine-status-card"><span class="engine-status-label">Partial</span><strong id="statusPartial">0</strong></div>
+                        <div class="engine-status-card"><span class="engine-status-label">Failed</span><strong id="statusFailed">0</strong></div>
+                        <div class="engine-status-card"><span class="engine-status-label">Skipped</span><strong id="statusSkipped">0</strong></div>
+                        <div class="engine-status-card"><span class="engine-status-label">Pending / not terminal</span><strong id="statusPending">—</strong></div>
+                        <div class="engine-status-card"><span class="engine-status-label">Log read age</span><strong id="statusFreshness">Not loaded</strong></div>
+                    </div>
+                    <div class="error-box" id="errorBox"></div>
+                </div>
+            </section>
+
+            <!-- ═════ HISTORY PAGE ═════ -->
+            <section class="page" id="historyPage">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">WORKSPACE / REPORTS</div>
+                        <h2>Scan History</h2>
+                        <p class="muted" style="font-size:13px;margin-top:4px">Save and compare metric snapshots stored locally in this browser.</p>
+                    </div>
+                    <div class="action-row">
+                        <button class="primary-btn" id="createSnapshot">＋ Save Snapshot</button>
+                        <button id="exportBackup">Export Backup</button>
+                        <label class="button-like" for="importBackup">Import Backup</label>
+                        <input accept="application/json,.json" hidden id="importBackup" type="file"/>
+                    </div>
+                </div>
+                <div class="kpi-row">
+                    <div class="mini-kpi"><small>Snapshots</small><strong id="snapshotCount">0</strong></div>
+                    <div class="mini-kpi"><small>Latest saved</small><strong id="latestSnapshot">—</strong></div>
+                    <div class="mini-kpi"><small>Storage</small><strong>IndexedDB</strong></div>
+                </div>
+                <div class="muted history-message" id="historyMessage">No snapshots saved yet. Load scanner files, then save a snapshot.</div>
+                <div aria-live="polite" class="panel compare-panel" hidden id="snapshotCompare"></div>
+                <div class="table-wrap">
+                    <table class="history-table">
+                        <thead><tr><th>Date &amp; time</th><th>Records</th><th>Completed</th><th>Integrity</th><th>Actions</th></tr></thead>
+                        <tbody id="historyRows"><tr><td class="empty" colspan="5">No history available.</td></tr></tbody>
+                    </table>
+                </div>
+                <p class="security-note" style="margin-top:16px">Snapshots store summary metrics only — not a copy of the full scanner results.</p>
+            </section>
+
+            <!-- ═════ PROFILE PAGE ═════ -->
+            <section class="page" id="profilePage">
+                <div class="page-header">
+                    <div>
+                        <div class="eyebrow">WORKSPACE / SETTINGS</div>
+                        <h2>Profile &amp; Settings</h2>
+                    </div>
+                </div>
+                <div class="settings-grid">
+                    <div class="panel">
+                        <h3>Profile</h3>
+                        <label class="field-label" for="profileName">Display name</label>
+                        <input id="profileName" value="Ziad Mabrouki"/>
+                        <label class="field-label" for="profileEmail">Email</label>
+                        <input id="profileEmail" readonly value="ziadmabrouki@scanner.gov"/>
+                        <button class="primary-btn" id="saveProfile">Save Profile</button>
+                    </div>
+                    <div class="panel">
+                        <h3>Preferences</h3>
+                        <label class="field-label" for="themeSelect">Appearance</label>
+                        <select id="themeSelect"><option value="dark">Dark</option><option value="light">Light</option></select>
+                        <label class="field-label" for="snapshotPolicy">Snapshot policy</label>
+                        <select id="snapshotPolicy"><option value="latest">Latest version</option><option value="all">Keep all versions</option></select>
+                        <p class="muted small-text">Settings are saved in this browser's IndexedDB.</p>
+                        <button class="primary-btn" id="saveSettings">Save Settings</button>
+                    </div>
+                    <div class="panel danger-panel">
+                        <h3>Local Data</h3>
+                        <p class="muted">Export a backup before clearing browser data. Clearing browser storage can permanently remove snapshots and settings.</p>
+                        <button class="danger" id="clearHistory">Clear Saved Snapshots</button>
+                    </div>
+                </div>
+            </section>
+
+            <footer>Z Scanner Ultra <span>·</span> Version 2.0 <span>·</span> V2.0 <span>·</span> Unified local-first application</footer>
+
+        </main>
+    </div>
+</div>
+
+<!-- ═══════════ DRAWER ═══════════ -->
+<div class="drawer-overlay" id="drawerOverlay">
+    <div class="drawer">
+        <div class="drawer-header">
+            <div class="drawer-heading">
+                <h2 id="drawerTitle">Record</h2>
+                <div class="drawer-subtitle" id="drawerSubtitle"></div>
+            </div>
+            <button aria-label="Close" class="drawer-close" id="drawerClose">✕</button>
+        </div>
+        <div class="detail-summary" id="detailSummary"></div>
+        <div id="drawerBody"></div>
+    </div>
+</div>
+
+<!-- ═══════════ SNAPSHOT DIALOG ═══════════ -->
+<div aria-labelledby="snapshotDialogTitle" aria-modal="true" class="dialog-backdrop" hidden id="snapshotDialog" role="dialog">
+    <div class="dialog-card">
+        <div class="dialog-head">
+            <h2 id="snapshotDialogTitle">Snapshot details</h2>
+            <button aria-label="Close" id="closeSnapshotDialog" type="button">✕</button>
+        </div>
+        <pre id="snapshotDialogBody"></pre>
+    </div>
+</div>
+
+<!-- ═══════════ TOAST ═══════════ -->
+<div aria-live="polite" class="toast" id="toast" role="status"></div>
+
+<!-- SheetJS for real XLSX export -->
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/scanner-engine.js"></script>
+</body>
+</html>
